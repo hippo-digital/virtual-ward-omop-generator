@@ -1,0 +1,410 @@
+schema_version: 0.1
+
+vocabulary:
+  id: "VH_VOCAB"
+  concept_file: "./examples/concepts.csv"
+
+dataset:
+  name: "basic_config"
+  random_seed: 789
+  persons: 100  # Scalable to larger populations
+
+  # Specific the relative mix of conditions (key on concept id)
+  condition_mix:
+    2100000300: 0.33   # COPD 
+    2100000301: 0.34   # Heart Failure
+    2100000302: 0.33   # Infection/Post-op
+
+  episodes_per_person:
+    min: 1
+    max: 4
+
+  episode_length_days:
+    modes: [7, 14, 21, 28]
+    probs: [0.25, 0.35, 0.25, 0.15]
+
+  # Full trajectory archetype distribution
+  episode_archetype_mix:
+    stable: 0.40
+    flare_mild: 0.25
+    flare_moderate: 0.20
+    flare_severe: 0.10
+    noisy_reporter: 0.05
+
+  survey_completion:
+    weekday: 0.87
+    weekend: 0.78
+
+  device_missingness:
+    base: 0.15
+    weekend_uplift: 0.05
+
+  outliers:
+    plausible_rate: 0.003
+    implausible_rate: 0.0005
+
+  age_ranges:
+    - min: 18
+      max: 30
+      weight: 0.33
+    - min: 31
+      max: 60
+      weight: 0.33
+    - min: 61
+      max: 85
+      weight: 0.34
+
+  mortality:
+    base_rate: 0.005
+    age_multipliers:
+      65-74: 1.15
+      75-84: 1.20
+      85+: 1.18
+    gender_multipliers:
+      male: 1.18
+      female: 1.10
+  
+  # Locations for patients are randomly assigned within the specified postcode districts
+  location:
+    districts:
+    - ME18
+    - WS14
+    - SG18
+    - ME13
+    - NE10
+
+# Type to concept id mapping
+types:
+  observation_type_patient_reported: 2100000011
+  observation_type_clinician_reported: 2100000019
+  measurement_type_patient_device: 2100000012
+  measurement_type_clinician: 2100000013
+  period_type_virtual_ward: 2100000014
+  condition_type_index: 2100000015
+  procedure_type_virtual_ward: 2100000016
+  drug_type_virtual_ward: 2100000017
+  visit_type_virtual_ward: 2100000018
+  death_type: 2100000900
+
+  collection_methods: [2100000700, 2100000701, 2100000702]
+  collection_method_distribution:
+    2100000700: 0.35  # Mobile App
+    2100000701: 0.25  # Web Form
+    2100000702: 0.40  # IVR
+
+  respondent_types: [2100000800, 2100000801]
+  respondent_type_distribution:
+    2100000800: 0.82  # Self-reported
+    2100000801: 0.18  # Caregiver-reported
+
+  "yes": 2100000020
+  "no": 2100000021
+  unable: 2100000022
+
+episode_and_visit_concepts:
+  episode: 2100000001
+  visits:
+    telehealth: 2100000002
+    home: 2100000003
+    device_check: 2100000004
+
+# Measurement concept -> unit concept
+units:
+  2100000100: 2100000030   # SpO2 -> percent
+  2100000101: 2100000031   # HR -> bpm
+  4292062: 2100000032      # Systolic Standing -> mmHg
+  4268883: 2100000032      # Diastolic Standing -> mmHg
+  4232915: 2100000032      # Systolic Sitting -> mmHg
+  4248524: 2100000032      # Diastolic Sitting -> mmHg
+  2100000104: 2100000033   # Temp -> °C
+  2100000105: 2100000034   # RR -> per minute
+  2100000106: 2100000035   # Weight -> kg
+
+# Comprehensive device assignment matrix (combined from both configs)
+device_assignment:
+  2100000300:   # COPD
+    2100000100: 1.0   # SpO2
+    2100000105: 1.0   # RR
+    2100000101: 1.0   # HR
+    2100000104: 0.4   # Temp
+    2100000106: 0.3   # Weight
+    4292062: 0.4   # Systolic Standing -> mmHg
+    4268883: 0.4   # Diastolic Standing -> mmHg
+    4232915: 0.4   # Systolic Sitting -> mmHg
+    4248524: 0.4   # Diastolic Sitting -> mmHg
+  2100000301:   # Heart Failure
+    2100000100: 1.0   # SpO2
+    2100000105: 1.0   # RR
+    2100000101: 1.0   # HR
+    2100000104: 0.4   # Temp
+    2100000106: 0.3   # Weight
+    4292062: 0.4   # Systolic Standing -> mmHg
+    4268883: 0.4   # Diastolic Standing -> mmHg
+    4232915: 0.4   # Systolic Sitting -> mmHg
+    4248524: 0.4   # Diastolic Sitting -> mmHg
+  2100000302:   # Infection/Post-op
+    2100000100: 1.0   # SpO2
+    2100000105: 1.0   # RR
+    2100000101: 1.0   # HR
+    2100000104: 0.4   # Temp
+    2100000106: 0.3   # Weight
+    4292062: 0.4   # Systolic Standing -> mmHg
+    4268883: 0.4   # Diastolic Standing -> mmHg
+    4232915: 0.4   # Systolic Sitting -> mmHg
+    4248524: 0.4   # Diastolic Sitting -> mmHg
+
+measurements:
+  - id: 2100000100  # SpO2
+    mean_by_condition: {2100000300: 93.0, 2100000301: 95.0, default: 96.0}
+    sd: 2.0
+    bounds: [70, 100]
+  - id: 2100000101  # Heart Rate
+    mean: 78.0
+    sd: 10.0
+    bounds: [30, 200]
+  - id: 2100000105  # Respiratory Rate
+    mean_by_condition: {2100000300: 18.0, default: 16.0}
+    sd: 3.0
+    bounds: [10, 40]
+  - id: 4292062  # Systolic BP Standing
+    mean: 128.0
+    sd: 14.0
+    bounds: [60, 200]
+  - id: 4268883  # Diastolic BP Standing
+    mean: 78.0
+    sd: 10.0
+    bounds: [30, 120]
+  - id: 4232915  # Systolic BP Sitting
+    mean: 128.0
+    sd: 14.0
+    bounds: [60, 200]
+  - id: 4248524  # Diastolic BP Sitting
+    mean: 78.0
+    sd: 10.0
+    bounds: [30, 120]
+  - id: 2100000104  # Temperature
+    mean: 36.7
+    sd: 0.4
+    bounds: [35.5, 41.0]
+  - id: 2100000106  # Body Weight
+    mean_by_condition: {2100000301: 84.0, default: 80.0}  # Only used as fallback if no baseline
+    sd: 12.0
+    bounds: [30, 180]
+    weekly_seasonality_kg: 0.6
+
+# Complete Patient Reported Outcomes specifications
+proms:
+  numeric:
+    - id: 2100000200   # Pain 0-10
+      min: 0
+      max: 10
+      baseline_mean: 2.0
+      baseline_sd: 1.5
+    - id: 2100000202   # Cough 0-4
+      min: 0
+      max: 4
+      baseline_mean_by_condition:
+        2100000300: 2.0  # Increased for COPD/smoking correlation
+        default: 1.2
+      baseline_sd: 0.9
+    - id: 2100000206   # Sleep 0-10
+      min: 0
+      max: 10
+      baseline_mean: 6.5
+      baseline_sd: 2.0
+  boolean:
+    - id: 2100000201   # Dyspnea
+      base_prob_by_condition: {2100000300: 0.5, 2100000301: 0.2, default: 0.05}
+    - id: 2100000207   # Fatigue
+      base_prob: 0.33
+    - id: 2100000203   # New Chest Pain
+      base_prob: 0.03
+    - id: 2100000204   # Appetite Reduced
+      base_prob: 0.15
+    - id: 2100000205   # Dizziness
+      base_prob: 0.10
+    - id: 2100000208   # Oedema
+      base_prob_by_condition: {2100000301: 0.20, default: 0.08}
+    - id: 1332774     # Cough (boolean)
+      base_prob_by_condition: {2100000300: 0.90, default: 0.25}
+    - id: 4164116     # Sputum Yes/No
+      base_prob_by_condition: {2100000300: 0.75, default: 0.25}
+    - id: 436583   # Fall
+      base_prob: 0.15
+    - id: 44803024  # Unplanned Admission
+      base_prob: 0.1
+
+# Per-Episode admissions observations from clinicians
+per_episode_obs:
+  numeric:
+    - id: 37018726 # Clinical Frailty Score (CFS)
+      min: 1
+      max: 9
+      baseline_mean: 6
+      baseline_sd: 2
+
+# Per-Person static observations (ie. height, smoker yes/no)
+per_person_obs:
+  numeric:
+    - id: 3036277    # Height in meters
+      mean: 1.634
+      sd: 0.09   
+      min: 1.40  
+      max: 1.95
+
+  boolean:
+    - id: 4041306     # Tobacco use and exposure (Known Smokers)
+      base_prob: 0.104
+    - id: 2100000612  # Care Home Resident
+      base_prob: 0.186
+
+# Advanced missingness modeling
+missingness_model:
+  survey_mnar:
+    dyspnea_coeff: 0.2
+    severe_symptom_offset: -0.1
+  device_gaps:
+    per_metric_base: 0.11
+    weekend_uplift: 0.07
+
+interventions:
+  urgent_review:
+    concept_id: 2100000501
+    adherence: 0.78
+    delay_hours_range: [0, 8]
+    triggers:
+      - spo2_abs_le: {measurement_id: 2100000100, value: 92}
+      - spo2_drop_from_7day_mean_ge: {measurement_id: 2100000100, delta: 3}
+      - dyspnea_ge: {observation_id: 2100000201, value: true}
+      - chest_pain_yes: {observation_id: 2100000203, yes_concept_id: 2100000020}
+      - hr_and_fatigue:
+          hr_ge: {measurement_id: 2100000101, value: 110, duration_hours: 6}
+          hr_le: {measurement_id: 2100000101, value: 50, duration_hours: 6}
+          fatigue_ge: {observation_id: 2100000207, value: true}
+
+  conveyance_ed:
+    concept_id: 2100000502
+    adherence: 0.85
+    delay_hours_range: [0, 24]
+    triggers:
+      - spo2_abs_le: {measurement_id: 2100000100, value: 88}
+      - chest_pain_and_hr:
+          chest_pain_yes: {observation_id: 2100000203, yes_concept_id: 2100000020}
+          hr_ge: {measurement_id: 2100000101, value: 120}
+      - hypotension_dizzy:
+          sbp_lt: {measurement_id: 4292062, value: 90}
+          dizziness_yes: {observation_id: 2100000205, yes_concept_id: 2100000020}
+    escalation:
+      to: 2100000503   # unplanned acute admission
+      prob_if_persistent: 0.40
+      window_hours: 24
+      delay_hours_range: [0, 6]
+
+  start_antibiotic:
+    concept_id: 2100000400
+    prob: 0.65
+    days_supply_range: [5, 10]
+    triggers:
+      cough_ge: {observation_id: 2100000202, value: 2}
+      temp_ge_days: {measurement_id: 2100000104, value: 37.8, days: 2}
+      appetite_yes: {observation_id: 2100000204, yes_concept_id: 2100000020}
+
+  increase_diuretic:
+    concept_id: 2100000401
+    prob: 0.72
+    days_supply_range: [3, 7]
+    triggers:
+      weight_gain_48h_ge: {measurement_id: 2100000106, kg: 1.5}
+      ankle_swelling_yes: {observation_id: 2100000208, yes_concept_id: 2100000020}
+      dyspnea_ge: {observation_id: 2100000201, value: 2}
+
+  start_oxygen:
+    concept_id: 2100000500
+    prob_by_condition: {2100000300: 0.65, 2100000301: 0.30, default: 0.30}  # Increased COPD oxygen need
+    criteria:
+      spo2_in_range_pct: {measurement_id: 2100000100, low: 89, high: 92, window_hours: 12}
+      dyspnea_ge: {observation_id: 2100000201, value: 2}
+
+  unplanned_admission:
+    concept_id: 2100000503
+    prob: 0.38
+    delay_hours_range: [0, 8]
+    triggers:
+      escalation_from_ed: true
+      severe_deterioration:
+        multiple_systems: true
+
+drug_ingredient_mapping:
+  2100000400: 2100001100
+  2100000401: 2100001101
+  2100000402: 2100001102
+
+# Complete OMOP table specification
+omop:
+  tables:
+    PERSON:
+      columns: [person_id, gender_concept_id, year_of_birth, month_of_birth, day_of_birth, race_concept_id, ethnicity_concept_id, location_id]
+    OBSERVATION_PERIOD:
+      columns: [observation_period_id, person_id, observation_period_start_date, observation_period_end_date, period_type_concept_id]
+      defaults: {period_type_concept_id: 2100000014}
+    EPISODE:
+      columns: [episode_id, person_id, episode_concept_id, episode_start_datetime, episode_end_datetime]
+      defaults: {episode_concept_id: 2100000001}
+    VISIT_OCCURRENCE:
+      columns: [visit_occurrence_id, person_id, visit_concept_id, visit_start_datetime, visit_end_datetime]
+    SURVEY_CONDUCT:
+      columns: [survey_conduct_id, person_id, survey_concept_id, survey_start_datetime, survey_end_datetime, collection_method_concept_id, respondent_type_concept_id, episode_id]
+      defaults: {survey_concept_id: 2100000010}
+    OBSERVATION:
+      columns: [observation_id, person_id, observation_concept_id, observation_date, observation_datetime, observation_type_concept_id, value_as_number, value_as_concept_id, unit_concept_id, survey_conduct_id, episode_id]
+      defaults: {observation_type_concept_id: 2100000011}
+    MEASUREMENT:
+      columns: [measurement_id, person_id, measurement_concept_id, measurement_datetime, value_as_number, value_as_concept_id, unit_concept_id, range_low, range_high, measurement_type_concept_id, episode_id]
+      defaults: {measurement_type_concept_id: 2100000012}
+    CONDITION_OCCURRENCE:
+      columns: [condition_occurrence_id, person_id, condition_concept_id, condition_start_datetime, condition_type_concept_id, episode_id]
+      defaults: {condition_type_concept_id: 2100000015}
+    DRUG_EXPOSURE:
+      columns: [drug_exposure_id, person_id, drug_concept_id, drug_exposure_start_datetime, days_supply, dose_unit_concept_id, route_concept_id, episode_id]
+    PROCEDURE_OCCURRENCE:
+      columns: [procedure_occurrence_id, person_id, procedure_concept_id, procedure_datetime, procedure_type_concept_id, episode_id]
+      defaults: {procedure_type_concept_id: 2100000016}
+    DEVICE_EXPOSURE:
+      columns: [device_exposure_id, person_id, device_concept_id, device_exposure_start_datetime, device_exposure_end_datetime, episode_id]
+    DEATH:
+      columns: [person_id, death_datetime, death_type_concept_id]
+      defaults: {death_type_concept_id: 2100000900}
+    LOCATION:
+      columns: [location_id, zip, latitude, longitude]
+
+  # Comprehensive analysis views
+  views_sql:
+    vw_prom_timeseries: |
+      SELECT person_id, episode_id, survey_conduct_id, observation_datetime,
+             observation_concept_id, value_as_number, value_as_concept_id
+      FROM observation;
+
+    vw_device_timeseries: |
+      SELECT person_id, episode_id, measurement_datetime,
+             measurement_concept_id, value_as_number, unit_concept_id,
+             measurement_type_concept_id
+      FROM measurement;
+
+    vw_interventions: |
+      SELECT person_id, episode_id, procedure_datetime AS event_datetime,
+             procedure_concept_id AS event_concept_id, 'PROC' AS domain
+      FROM procedure_occurrence
+      UNION ALL
+      SELECT person_id, episode_id, drug_exposure_start_datetime, drug_concept_id, 'DRUG'
+      FROM drug_exposure;
+
+    vw_episode_summary: |
+      SELECT e.episode_id, e.person_id, e.episode_start_datetime, e.episode_end_datetime,
+             COUNT(DISTINCT s.survey_conduct_id) as survey_count,
+             COUNT(DISTINCT m.measurement_id) as measurement_count,
+             COUNT(DISTINCT p.procedure_occurrence_id) as intervention_count
+      FROM episode e
+      LEFT JOIN survey_conduct s ON e.episode_id = s.episode_id
+      LEFT JOIN measurement m ON e.episode_id = m.episode_id
+      LEFT JOIN procedure_occurrence p ON e.episode_id = p.episode_id
+      GROUP BY e.episode_id, e.person_id, e.episode_start_datetime, e.episode_end_datetime;
